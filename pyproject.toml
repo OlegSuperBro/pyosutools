@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyosudb"
-version = "0.1.0"
+dynamic = ["version"]
 authors = [
   { name="OlegSuperBro", email="olegrakovic323@gmail.com" },
 ]
@@ -20,3 +20,6 @@ classifiers = [
 [project.urls]
 "Homepage" = "https://github.com/OlegSuperBro/pyosudb"
 "Bug Tracker" = "https://github.com/OlegSuperBro/pyosudb/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "package.__version__"}
