@@ -21,6 +21,11 @@ class _PresencedbParser:
 
 @dataclass
 class Presencedb:
+    """
+    DO NOT USE IT FOR NOW!
+
+    I'm currentry searching info about presence.db file, so this nit works.
+    """
     version: int
     count: int
     values: List

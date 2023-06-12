@@ -22,4 +22,4 @@ classifiers = [
 "Bug Tracker" = "https://github.com/OlegSuperBro/pyosudb/issues"
 
 [tool.setuptools.dynamic]
-version = {attr = "package.__version__"}
+version = {attr = "pyosudb.__version__"}

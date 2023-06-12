@@ -9,6 +9,20 @@ from pyosudb.datatypes import BeatmapScores
 
 @dataclass
 class Scoresdb:
+    """
+    Class representing scores.db file
+
+    Attributes
+    ----
+    version: int
+        osu! version when this file created
+
+    count_beatmaps_scores: int
+        Amount of beatmaps scores in .db file
+
+    beatmaps_scores: List[BeatmapScores]
+        List of scores on beatmaps represented by "BeatmapScores" class
+    """
     version: int
     count_beatmaps_scores: int
     beatmaps_scores: List[BeatmapScores]
@@ -29,8 +43,21 @@ class _Parser:
         return Scoresdb(version, count_beatmaps, beatmaps)
 
 
-def parse_scoresdb(osudb_file: Union[str, os.PathLike, io.BytesIO]) -> Scoresdb:
-    if not isinstance(osudb_file, io.BytesIO):
-        osudb_file = open(osudb_file, "rb")
+def parse_scoresdb(scoresdb_file: Union[str, os.PathLike, io.BytesIO]) -> Scoresdb:
+    """
+    Parse scores.db file
 
-    return _Parser(osudb_file).parse()
+    Args
+    ----
+    scoresdb_file: str | os.PathLike | io.BytesIO
+        Path or opened file
+
+    Returns
+    ----
+    scoresdb
+        instance of scoresdb class
+    """
+    if not isinstance(scoresdb_file, io.BytesIO):
+        scoresdb_file = open(scoresdb_file, "rb")
+
+    return _Parser(scoresdb_file).parse()

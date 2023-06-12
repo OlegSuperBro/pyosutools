@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Union
+from typing import Union, Any, List
 import datetime
 import tempfile
 import sqlite3
@@ -13,6 +13,32 @@ from pyosudb.datatypes import Beatmap, UserPermissions
 
 @dataclass
 class Osudb:
+    """
+    Class representing osu!.db file
+
+    Attributes
+    ----
+    game_version: int
+        osu! version when this file created
+
+    folder_count: int
+        Amount of folders in "songs" folder
+
+    account_unlocked: bool
+        Is account banned. False if banned, True otherwise
+
+    unlock_datetime: datetime.datetime
+        Time until account will be unbanned. Always 0 if account is not banned (account_unlocked=True)
+
+    username: str
+        Player username
+
+    sql_beatmaps_db: sqlite3.Connection
+        Connection to sqllite3 database. It must not be set by the user
+
+    user_permissions: UserPermissions
+        User permissions in chat. Check UserPermissions class for more info
+    """
     game_version: int
     folder_count: int
     account_unlocked: bool  # false if account banned/locked
@@ -25,15 +51,39 @@ class Osudb:
     user_permissions: UserPermissions
 
     # can't be saved because osu.db can be big and we don't need 20k objects with maps in our ram
-    def beatmaps(self):
+    def beatmaps(self) -> List[Beatmap]:
+        """
+        List of beatmaps
+
+        Returns
+        ----
+        List[Beatmaps]
+            List of Beatmaps instances
+        """
         cursor = self.sql_beatmaps_db.cursor()
         return [Beatmap.from_sql(*beatmap) for beatmap in cursor.execute("SELECT * FROM 'beatmaps' ")]
 
-    def get_beatmap_from_hash(self, hash):
+    def get_beatmap_from_hash(self, hash: str) -> Beatmap:
+        """
+        Get beatmap from sql table using hash
+
+        Args
+        ----
+        hash: str
+            beatmap hash
+
+        Returns
+        ----
+        Beatmap
+            instance of Beatmap
+        """
         cursor = self.sql_beatmaps_db.cursor()
         return Beatmap.from_sql(cursor.execute(f"SELECT * FROM 'beatmaps' WHERE md5_hash='{hash}'")[0])
 
-    def beatmaps_execute_sql(self, command):
+    def beatmaps_execute_sql(self, command) -> Any:
+        """
+        Executes sql command in table with beatmaps
+        """
         cursor = self.sql_beatmaps_db.cursor()
         return cursor.execute(command)
 
@@ -43,7 +93,10 @@ class _Parser:
         self.osu_db_file = osu_db_file
         self.offset = 0
 
-    def generate_sql_db(self):
+    def generate_sql_db(self) -> None:
+        """
+        Generates sql table for file
+        """
         cursor = self.beatmaps_db.cursor()
         cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='beatmaps'")
         if cursor.fetchone()[0] == 1:
@@ -106,7 +159,10 @@ class _Parser:
                             mania_scroll_speed INTEGER
                         );""")
 
-    def add_beatmap_to_db(self, beatmap: Beatmap):
+    def add_beatmap_to_db(self, beatmap: Beatmap) -> None:
+        """
+        Adds beatmap to sql table
+        """
         self.beatmaps_db.execute("INSERT INTO beatmaps VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                                  (beatmap.size, beatmap.artist, beatmap.artist_unicode, beatmap.title, beatmap.title_unicode,
                                   beatmap.mapper, beatmap.difficulty, beatmap.audio_file, beatmap.md5_hash, beatmap.osu_file,
@@ -145,6 +201,30 @@ class _Parser:
 
 
 def parse_osudb(osudb_file: Union[str, os.PathLike, io.BytesIO], beatmaps_db: Union[str, os.PathLike] = None, skip_beatmaps: bool = False) -> Osudb:
+    """
+    Parse osu!.db file
+
+    Args
+    ----
+    osudb_file: str | os.PathLike | io.BytesIO
+        Path or opened file
+
+    beatmaps_db: str | os.PathLike = None
+        Path to sql database with beatmaps. \n
+        If None - creates temp file in system temp directory  \n
+        If non existing file, creates new one in that path  \n
+        If existing file, opens it  \n
+
+    skip_beatmaps: bool = False
+        Skip beatmap parsing. \n
+        Can decrease time for parsing, but beatmaps will be not available to use \n
+        (except if beatmaps_db is profided with existing file)
+
+    Returns
+    ----
+    Osudb
+        instance of Osudb class
+    """
     if not isinstance(osudb_file, io.BytesIO):
         osudb_file = open(osudb_file, "rb")
 
