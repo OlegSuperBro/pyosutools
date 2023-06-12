@@ -61,7 +61,7 @@ class Osudb:
             List of Beatmaps instances
         """
         cursor = self.sql_beatmaps_db.cursor()
-        return [Beatmap.from_sql(*beatmap) for beatmap in cursor.execute("SELECT * FROM 'beatmaps' ")]
+        return [Beatmap.from_sql(*beatmap) for beatmap in cursor.execute("SELECT * FROM 'beatmaps' ").fetchall()]
 
     def get_beatmap_from_hash(self, hash: str) -> Beatmap:
         """
@@ -78,14 +78,14 @@ class Osudb:
             instance of Beatmap
         """
         cursor = self.sql_beatmaps_db.cursor()
-        return Beatmap.from_sql(cursor.execute(f"SELECT * FROM 'beatmaps' WHERE md5_hash='{hash}'")[0])
+        return Beatmap.from_sql(*cursor.execute(f"SELECT * FROM 'beatmaps' WHERE md5_hash='{hash}'").fetchone())
 
     def beatmaps_execute_sql(self, command) -> Any:
         """
         Executes sql command in table with beatmaps
         """
         cursor = self.sql_beatmaps_db.cursor()
-        return cursor.execute(command)
+        return cursor.execute(command).fetchall()
 
 
 class _Parser:
