@@ -8,7 +8,7 @@ RES = Path(__file__).parent / "resources"
 
 
 def test_parsing_osudb():
-    db = pyosudb.parse_osudb(RES / "osu!.db")
+    db = pyosudb.parse_osudb(RES / "osu!.db", RES / "tmp_osudb.sql")
     assert db.game_version == 20230319
     assert db.folder_count == 2736
     assert db.account_unlocked is True

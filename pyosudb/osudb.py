@@ -124,7 +124,7 @@ class _Parser:
         game_version = utils.read_uint(self.osu_db_file)
         folder_count = utils.read_uint(self.osu_db_file)
         account_unlocked = utils.read_bool(self.osu_db_file)
-        unlock_datetime = datetime.datetime.min + datetime.timedelta(microseconds=utils.read_ulong(self.osu_db_file) / 10)
+        unlock_datetime = utils.read_datetime(self.osu_db_file)
         username = utils.read_string(self.osu_db_file)
         count_beatmaps = utils.read_uint(self.osu_db_file)
 
