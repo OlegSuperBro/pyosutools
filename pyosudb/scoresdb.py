@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 import os
 import io
 
@@ -29,7 +29,7 @@ class _Parser:
         return Scoresdb(version, count_beatmaps, beatmaps)
 
 
-def parse_scoresdb(osudb_file: str | os.PathLike | io.BytesIO) -> Scoresdb:
+def parse_scoresdb(osudb_file: Union[str, os.PathLike, io.BytesIO]) -> Scoresdb:
     if not isinstance(osudb_file, io.BytesIO):
         osudb_file = open(osudb_file, "rb")
 

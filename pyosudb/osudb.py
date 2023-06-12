@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Union
 import datetime
 import tempfile
 import sqlite3
@@ -143,7 +144,7 @@ class _Parser:
         return Osudb(game_version, folder_count, account_unlocked, unlock_datetime, username, count_beatmaps, self.beatmaps_db, user_permissions)
 
 
-def parse_osudb(osudb_file: str | os.PathLike | io.BytesIO, beatmaps_db: str | os.PathLike = None, skip_beatmaps: bool = False) -> Osudb:
+def parse_osudb(osudb_file: Union[str, os.PathLike, io.BytesIO], beatmaps_db: Union[str, os.PathLike] = None, skip_beatmaps: bool = False) -> Osudb:
     if not isinstance(osudb_file, io.BytesIO):
         osudb_file = open(osudb_file, "rb")
 

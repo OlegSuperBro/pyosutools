@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 import os
 import io
 
@@ -29,7 +29,7 @@ class _Parser:
         return Collectiondb(version, count_collections, collections)
 
 
-def parse_collectiondb(osudb_file: str | os.PathLike | io.BytesIO) -> Collectiondb:
+def parse_collectiondb(osudb_file: Union[str, os.PathLike, io.BytesIO]) -> Collectiondb:
     if not isinstance(osudb_file, io.BytesIO):
         osudb_file = open(osudb_file, "rb")
 
