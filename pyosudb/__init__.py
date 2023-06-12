@@ -6,6 +6,7 @@ try:
     from importlib import metadata
     __version__ = metadata.version(__package__)
 except ImportError:
-    pass
+    import pkg_resources
+    __version__ = pkg_resources.get_distribution(__package__).version
 
 __all__ = ["parse_osudb", "parse_collectiondb", "parse_scoresdb"]
