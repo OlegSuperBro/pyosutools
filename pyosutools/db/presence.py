@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
-from pyosudb import utils
+from pyosutools import utils
 
 
 class _PresencedbParser:

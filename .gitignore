@@ -1,0 +1,7 @@
+.vscode/
+.venv/
+dist/
+*egg-info/
+__pycache__/
+tmp*
+.pytest_cache/

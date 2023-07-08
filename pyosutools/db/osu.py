@@ -7,8 +7,9 @@ import pickle
 import io
 import os
 
-from pyosudb import utils
-from pyosudb.datatypes import Beatmap, UserPermissions
+from pyosutools import utils
+from pyosutools.db.datatypes import Beatmap, UserPermissions, RankedStatus, ModStarRatingPair, TimingPoint
+from pyosutools.datatypes import Mod, GameMode
 
 
 @dataclass
@@ -20,9 +21,6 @@ class Osudb:
     ----
     game_version: int
         osu! version when this file created
-
-    folder_count: int
-        Amount of folders in "songs" folder
 
     account_unlocked: bool
         Is account banned. False if banned, True otherwise
@@ -40,11 +38,9 @@ class Osudb:
         User permissions in chat. Check UserPermissions class for more info
     """
     game_version: int
-    folder_count: int
     account_unlocked: bool  # false if account banned/locked
     unlock_datetime: datetime.datetime
     username: str
-    count_beatmaps: int
 
     sql_beatmaps_db: sqlite3.Connection
 
@@ -102,7 +98,6 @@ class _Parser:
         if cursor.fetchone()[0] == 1:
             self.beatmaps_db.execute("DROP TABLE beatmaps")
         self.beatmaps_db.execute("""CREATE TABLE beatmaps (
-                            size INTEGER,
                             artist TEXT,
                             artist_unicode TEXT,
                             title TEXT,
@@ -154,8 +149,6 @@ class _Parser:
                             disable_storyboard INTEGER,
                             disable_video INTEGER,
                             visual_override INTEGER,
-                            unknown INTEGER,
-                            last_modification2 TEXT,
                             mania_scroll_speed INTEGER
                         );""")
 
@@ -163,8 +156,8 @@ class _Parser:
         """
         Adds beatmap to sql table
         """
-        self.beatmaps_db.execute("INSERT INTO beatmaps VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                                 (beatmap.size, beatmap.artist, beatmap.artist_unicode, beatmap.title, beatmap.title_unicode,
+        self.beatmaps_db.execute("INSERT INTO beatmaps VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                                 (beatmap.artist, beatmap.artist_unicode, beatmap.title, beatmap.title_unicode,
                                   beatmap.mapper, beatmap.difficulty, beatmap.audio_file, beatmap.md5_hash, beatmap.osu_file,
                                   str(pickle.dumps(beatmap.ranked_status)), beatmap.count_hitcircles, beatmap.count_sliders, beatmap.count_spinners, str(pickle.dumps(beatmap.last_modification)),
                                   beatmap.ar, beatmap.cs, beatmap.hp, beatmap.od, beatmap.slider_velocity,
@@ -174,30 +167,155 @@ class _Parser:
                                   beatmap.local_offset, beatmap.stack_leniency, str(pickle.dumps(beatmap.gameplay_mode)), beatmap.song_source, beatmap.song_tags,
                                   beatmap.online_offset, beatmap.title_font, beatmap.unplayed, str(pickle.dumps(beatmap.last_played)), beatmap.is_osz2,
                                   beatmap.folder_name, str(pickle.dumps(beatmap.last_checked)), beatmap.ignore_sound, beatmap.ignore_skin, beatmap.disable_storyboard,
-                                  beatmap.disable_video, beatmap.visual_override, beatmap.unknown, beatmap.last_modification2, beatmap.mania_scroll_speed))
+                                  beatmap.disable_video, beatmap.visual_override, beatmap.mania_scroll_speed))
 
     def parse(self, connection: sqlite3.Connection = None, skip_beatmaps: bool = False) -> Osudb:
         game_version = utils.read_uint(self.osu_db_file)
-        folder_count = utils.read_uint(self.osu_db_file)
+        utils.read_uint(self.osu_db_file)  # ignoring folder count cuz we don't need it
         account_unlocked = utils.read_bool(self.osu_db_file)
         unlock_datetime = utils.read_datetime(self.osu_db_file)
         username = utils.read_string(self.osu_db_file)
+
         count_beatmaps = utils.read_uint(self.osu_db_file)
 
         self.beatmaps_db = connection
         if skip_beatmaps:
             for _ in range(count_beatmaps):
-                Beatmap.parse(self.osu_db_file, game_version)
+                self.parse_beatmap(game_version)
         else:
             self.generate_sql_db()
             for _ in range(count_beatmaps):
-                self.add_beatmap_to_db(Beatmap.parse(self.osu_db_file, game_version))
+                self.add_beatmap_to_db(self.parse_beatmap(game_version))
 
             self.beatmaps_db.commit()
 
         user_permissions = UserPermissions(utils.read_uint(self.osu_db_file))
 
-        return Osudb(game_version, folder_count, account_unlocked, unlock_datetime, username, count_beatmaps, self.beatmaps_db, user_permissions)
+        return Osudb(game_version, account_unlocked, unlock_datetime, username, self.beatmaps_db, user_permissions)
+
+    def parse_beatmap(self, game_ver: int = 0):
+        """
+        Parse beatmap
+
+        Args
+        ----
+        game_ver: int
+            Version of game
+
+        Returns
+        ----
+        Beatmap
+            Parsed beatmap instance
+        """
+        if game_ver < 20191106:
+            utils.read_uint(self.osu_db_file)  # ignore size
+        artist = utils.read_string(self.osu_db_file)
+        artist_unicode = utils.read_string(self.osu_db_file)
+        title = utils.read_string(self.osu_db_file)
+
+        title_unicode = utils.read_string(self.osu_db_file)
+        creator = utils.read_string(self.osu_db_file)
+        difficulty = utils.read_string(self.osu_db_file)
+        audio_file = utils.read_string(self.osu_db_file)
+        md5_hash = utils.read_string(self.osu_db_file)
+        osu_file = utils.read_string(self.osu_db_file)
+
+        ranked_status = RankedStatus(utils.read_ubyte(self.osu_db_file))
+        count_hitcircles = utils.read_ushort(self.osu_db_file)
+        count_sliders = utils.read_ushort(self.osu_db_file)
+        count_spiners = utils.read_ushort(self.osu_db_file)
+
+        last_modification = utils.read_datetime(self.osu_db_file)
+
+        if game_ver < 20140609:
+            ar = utils.read_ubyte(self.osu_db_file)
+            cs = utils.read_ubyte(self.osu_db_file)
+            hp = utils.read_ubyte(self.osu_db_file)
+            od = utils.read_ubyte(self.osu_db_file)
+        else:
+            ar = utils.read_float(self.osu_db_file)
+            cs = utils.read_float(self.osu_db_file)
+            hp = utils.read_float(self.osu_db_file)
+            od = utils.read_float(self.osu_db_file)
+
+        slider_velocity = utils.read_double(self.osu_db_file)
+
+        std_pairs = []
+        taiko_pairs = []
+        ctb_pairs = []
+        mania_pairs = []
+        if game_ver >= 20140609:
+            for _ in range(utils.read_uint(self.osu_db_file)):
+                tmp = utils.read_int_double(self.osu_db_file)
+                std_pairs.append(ModStarRatingPair(Mod(tmp[0]), tmp[1]))
+
+            for _ in range(utils.read_uint(self.osu_db_file)):
+                tmp = utils.read_int_double(self.osu_db_file)
+                taiko_pairs.append(ModStarRatingPair(Mod(tmp[0]), tmp[1]))
+
+            for _ in range(utils.read_uint(self.osu_db_file)):
+                tmp = utils.read_int_double(self.osu_db_file)
+                ctb_pairs.append(ModStarRatingPair(Mod(tmp[0]), tmp[1]))
+
+            for _ in range(utils.read_uint(self.osu_db_file)):
+                tmp = utils.read_int_double(self.osu_db_file)
+                mania_pairs.append(ModStarRatingPair(Mod(tmp[0]), tmp[1]))
+
+        drain_time = utils.read_uint(self.osu_db_file)
+        total_time = utils.read_uint(self.osu_db_file)
+        preview_time = utils.read_uint(self.osu_db_file)
+
+        timing_points = []
+        for _ in range(utils.read_uint(self.osu_db_file)):
+            timing_points.append(TimingPoint(*utils.read_timing_point(self.osu_db_file)))
+
+        difficulty_id = utils.read_uint(self.osu_db_file)
+        beatmap_id = utils.read_uint(self.osu_db_file)
+        thread_id = utils.read_uint(self.osu_db_file)
+
+        std_grade = utils.read_ubyte(self.osu_db_file)
+        taiko_grade = utils.read_ubyte(self.osu_db_file)
+        ctb_grade = utils.read_ubyte(self.osu_db_file)
+        mania_grade = utils.read_ubyte(self.osu_db_file)
+
+        local_offset = utils.read_ushort(self.osu_db_file)
+        stack_laniency = utils.read_float(self.osu_db_file)
+
+        gameplay_mode = GameMode(utils.read_ubyte(self.osu_db_file))
+
+        song_source = utils.read_string(self.osu_db_file)
+        song_tags = utils.read_string(self.osu_db_file)
+
+        online_offset = utils.read_ushort(self.osu_db_file)
+
+        title_font = utils.read_string(self.osu_db_file)
+
+        unplayed = utils.read_bool(self.osu_db_file)
+        last_played = utils.read_datetime(self.osu_db_file)
+
+        is_osz2 = utils.read_bool(self.osu_db_file)
+        folder_name = utils.read_string(self.osu_db_file)
+        last_checked = utils.read_datetime(self.osu_db_file)
+
+        ignore_sound = utils.read_bool(self.osu_db_file)
+        ignore_skin = utils.read_bool(self.osu_db_file)
+        disable_storyboard = utils.read_bool(self.osu_db_file)
+        disable_video = utils.read_bool(self.osu_db_file)
+
+        visual_override = utils.read_bool(self.osu_db_file)
+
+        if game_ver < 20140609:
+            utils.read_uint(self.osu_db_file)  # osu! wiki page literally says it's unknown and present if game version less than 20140609
+
+        utils.read_uint(self.osu_db_file)  # ignore second modification time
+
+        mania_scroll_speed = utils.read_ubyte(self.osu_db_file)
+
+        return Beatmap(artist, artist_unicode, title, title_unicode, creator, difficulty, audio_file, md5_hash, osu_file, ranked_status, count_hitcircles, count_sliders,
+                       count_spiners, last_modification, ar, cs, hp, od, slider_velocity, std_pairs, taiko_pairs, ctb_pairs, mania_pairs, drain_time, total_time, preview_time,
+                       timing_points, difficulty_id, beatmap_id, thread_id, std_grade, taiko_grade, ctb_grade, mania_grade, local_offset, stack_laniency, gameplay_mode, song_source,
+                       song_tags, online_offset, title_font, unplayed, last_played, is_osz2, folder_name, last_checked, ignore_sound, ignore_skin, disable_storyboard, disable_video,
+                       visual_override, mania_scroll_speed)
 
 
 def parse_osudb(osudb_file: Union[str, os.PathLike, io.BytesIO], beatmaps_db: Union[str, os.PathLike] = None, skip_beatmaps: bool = False) -> Osudb:

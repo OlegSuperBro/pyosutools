@@ -3,8 +3,8 @@ from typing import List, Union
 import os
 import io
 
-from pyosudb import utils
-from pyosudb.datatypes import Collection
+from pyosutools import utils
+from pyosutools.db.datatypes import Collection
 
 
 @dataclass
@@ -29,18 +29,28 @@ class Collectiondb:
 
 
 class _Parser:
-    def __init__(self, collectiondb_file) -> None:
-        self.collectiondb_file = collectiondb_file
+    def __init__(self, collection_db_file) -> None:
+        self.collection_db_file = collection_db_file
         self.offset = 0
 
     def parse(self) -> Collectiondb:
-        version = utils.read_uint(self.collectiondb_file)
-        count_collections = utils.read_uint(self.collectiondb_file)
+        version = utils.read_uint(self.collection_db_file)
+        count_collections = utils.read_uint(self.collection_db_file)
         collections = []
         for _ in range(count_collections):
-            collections.append(Collection.parse(self.collectiondb_file, version))
+            collections.append(self.parse_collection(version))
 
         return Collectiondb(version, count_collections, collections)
+
+    def parse_collection(self, game_ver: int = 0):
+        name = utils.read_string(self.collection_db_file)
+        count_beatmaps = utils.read_uint(self.collection_db_file)
+        beatmaps_hash = []
+
+        for _ in range(count_beatmaps):
+            beatmaps_hash.append(utils.read_string(self.collection_db_file))
+
+        return Collection(name, count_beatmaps, beatmaps_hash)
 
 
 def parse_collectiondb(collectiondb_file: Union[str, os.PathLike, io.BytesIO]) -> Collectiondb:

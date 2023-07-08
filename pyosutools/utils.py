@@ -66,4 +66,8 @@ def read_string(buffer, encoding: str = "utf-8") -> str:
 
 
 def read_datetime(buffer) -> datetime.datetime:
-    return datetime.datetime.min + datetime.timedelta(microseconds=read_ulong(buffer) / 10)
+    ticks = read_ulong(buffer)
+    if ticks >= 621355968000000000:
+        return datetime.datetime.fromtimestamp((ticks-621355968000000000)/10_000_000, tz=datetime.timezone.utc)
+    else:
+        return datetime.datetime.min
