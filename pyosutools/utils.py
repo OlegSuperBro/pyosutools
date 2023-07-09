@@ -71,3 +71,11 @@ def read_datetime(buffer) -> datetime.datetime:
         return datetime.datetime.fromtimestamp((ticks-621355968000000000)/10_000_000, tz=datetime.timezone.utc)
     else:
         return datetime.datetime.min
+
+
+def is_int(text) -> bool:
+    try:
+        assert int(text) == float(text)
+    except (ValueError, AssertionError):
+        return False
+    return True
