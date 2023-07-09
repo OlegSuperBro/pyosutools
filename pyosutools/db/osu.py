@@ -74,7 +74,7 @@ class Osudb:
             instance of Beatmap
         """
         cursor = self.sql_beatmaps_db.cursor()
-        return Beatmap.from_sql(*cursor.execute(f"SELECT * FROM 'beatmaps' WHERE md5_hash='{hash}'").fetchone())
+        return _Parser.beatmap_from_sql(*cursor.execute(f"SELECT * FROM 'beatmaps' WHERE md5_hash='{hash}'").fetchone())
 
     def beatmaps_execute_sql(self, command) -> Any:
         """
@@ -317,8 +317,32 @@ class _Parser:
                        song_tags, online_offset, title_font, unplayed, last_played, is_osz2, folder_name, last_checked, ignore_sound, ignore_skin, disable_storyboard, disable_video,
                        visual_override, mania_scroll_speed)
 
+    @staticmethod
+    def beatmap_from_sql(*args):
+        # TODO: rewrite func cuz this one is kinda unsave
+        """
+        Get beatmap from sql row
 
-def parse_osudb(osudb_file: Union[str, os.PathLike, io.BytesIO], beatmaps_db: Union[str, os.PathLike] = None, skip_beatmaps: bool = False) -> Osudb:
+        Returns
+        ----
+        Beatmap
+            osu! beatmap
+        """
+        new_args = []
+        for arg in args:
+            if arg is None:
+                new_args.append(arg)
+                continue
+
+            if type(arg) == str and (arg[:2] == "b\'" or arg[:2] == "b\""):
+                new_args.append(pickle.loads(bytearray(eval(arg))))
+                continue
+            new_args.append(arg)
+
+        return Beatmap(*new_args)
+
+
+def parse_osudb(osudb_file: Union[str, os.PathLike, io.BytesIO], beatmaps_db: Union[str, os.PathLike] = None, skip_beatmaps: bool = False, sql_check_same_thread: bool = True) -> Osudb:
     """
     Parse osu!.db file
 
@@ -349,8 +373,8 @@ def parse_osudb(osudb_file: Union[str, os.PathLike, io.BytesIO], beatmaps_db: Un
     db_connection = None
 
     if beatmaps_db is None:
-        db_connection = sqlite3.connect(tempfile.gettempdir() + "pyosudb_tmp.sql")
+        db_connection = sqlite3.connect(tempfile.gettempdir() + "pyosudb_tmp.sql", check_same_thread=sql_check_same_thread)
     else:
-        db_connection = sqlite3.connect(beatmaps_db)
+        db_connection = sqlite3.connect(beatmaps_db, check_same_thread=sql_check_same_thread)
 
     return _Parser(osudb_file).parse(db_connection, skip_beatmaps)

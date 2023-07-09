@@ -1,8 +1,9 @@
+from __future__ import annotations
 import re
 from dataclasses import dataclass
 from io import TextIOWrapper
 from os import PathLike
-from typing import List, Tuple, Self, Union
+from typing import List, Tuple, Union
 
 from pyosutools.beatmaps.datatypes import (GeneralSettings, EditorSettings, Metadata, Difficulty,
                                            BaseEvent, TimingPoint, ComboColors, BaseHitObject, HitObjectType,
@@ -21,20 +22,20 @@ class Beatmap:
     difficulty: Difficulty
     events: List[BaseEvent]
     timing_points: List[TimingPoint]
-    colours: list[ComboColors]
-    hit_objects: list[BaseHitObject]
+    colours: List[ComboColors]
+    hit_objects: List[BaseHitObject]
 
     @staticmethod
-    def from_path(path: Union[str, PathLike]) -> Self:
+    def from_path(path: Union[str, PathLike]) -> Beatmap:
         with open(path, "r") as f:
             return Beatmap.from_file(f)
 
     @staticmethod
-    def from_file(file: TextIOWrapper) -> Self:
+    def from_file(file: TextIOWrapper) -> Beatmap:
         return Beatmap.from_data(file.readlines())
 
     @staticmethod
-    def from_data(data: List[str]) -> Self:
+    def from_data(data: List[str]) -> Beatmap:
         return _Parser.parse(data)
 
 
@@ -83,17 +84,16 @@ class _Parser:
 
         hit_sample_data = _Parser.parse_hit_sample_data(values[-1:][0])
         hit_sample = HitSample(**hit_sample_data) if hit_sample_data is not None else None
-
-        hit_object = BaseHitObject(x, y, time, hit_sound, hit_sample)
-
-        if hit_object_type == HitObjectType["CIRCLE"]:
+        if HitObjectType["CIRCLE"] in hit_object_type:
             hit_object = CircleObject(x, y, time, hit_sound, hit_sample)
-        elif hit_object_type == HitObjectType["SLIDER"]:
-            hit_object = SliderObject(x, y, time, hit_sound, hit_sample, **_Parser.parse_slider_object_data(values[5:-1]))
-        elif hit_object_type == HitObjectType["SPINNER"]:
-            hit_object = SpinnerObject(x, y, time, hit_sound, hit_sample, **_Parser.parse_spinner_object_data(values[5:-1]))
-        elif hit_object_type == HitObjectType["MANIA_HOLD"]:
-            hit_object = ManiaHoldObject(x, y, time, hit_sound, hit_sample, **_Parser.parse_mania_hold_object_data(values[5:-1]))
+        elif HitObjectType["SLIDER"] in hit_object_type:
+            hit_object = SliderObject(x, y, time, hit_sound, hit_sample, **_Parser.parse_slider_object_data(values[5:]))
+        elif HitObjectType["SPINNER"] in hit_object_type:
+            hit_object = SpinnerObject(x, y, time, hit_sound, hit_sample, **_Parser.parse_spinner_object_data(values[5:]))
+        elif HitObjectType["MANIA_HOLD"] in hit_object_type:
+            hit_object = ManiaHoldObject(x, y, time, hit_sound, hit_sample, **_Parser.parse_mania_hold_object_data(values[5:]))
+        else:
+            hit_object = BaseHitObject(x, y, time, hit_sound, hit_sample)
 
         return hit_object
 
@@ -102,9 +102,9 @@ class _Parser:
         values = list(map(lambda x: x.split("|"), values))
         return {
             "curve_type": SliderType(values[0][0]),
-            "curve_points": [CurvePoint(value[0], value[1]) for value in values[0][1:]],
+            "curve_points": [CurvePoint(int(value.split(":")[0]), int(value.split(":")[1])) for value in values[0][1:]],
             "slides": int(values[1][0]),
-            "length": float(values[2][0]) if len(values) > 2 else None,
+            "length": float(values[2][0]),
             "edge_sounds": (values[3][0]) if len(values) > 3 else None,
             "edge_sets": (values[4][0]) if len(values) > 4 else None
         }
