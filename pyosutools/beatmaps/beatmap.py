@@ -10,7 +10,7 @@ from pyosutools.beatmaps.datatypes import (GeneralSettings, EditorSettings, Meta
                                            EventType, BackgroundEvent, BreakEvent, VideoEvent,
                                            CircleObject, ManiaHoldObject, SliderObject, SpinnerObject,
                                            SliderType, CurvePoint, HitSound, HitSample)
-from pyosutools.utils import is_int
+from pyosutools.utils import is_number, as_number, is_int
 
 
 @dataclass
@@ -200,24 +200,24 @@ class _Parser:
 
             if curr_header == "General":
                 key, value = _Parser.parse_line_with_key(line)
-                general_dict[key] = int(value) if is_int(value) else value
+                general_dict[key] = as_number(value) if is_number(value) else value
                 continue
 
             elif curr_header == "Editor":
                 key, value = _Parser.parse_line_with_key(line)
-                editor_dict[key] = int(value) if is_int(value) else value
+                editor_dict[key] = as_number(value) if is_number(value) else value
                 continue
 
             elif curr_header == "Metadata":
                 key, value = _Parser.parse_line_with_key(line)
                 key = key.replace("i_d", "id")
-                metadata_dict[key] = int(value) if is_int(value) else value
+                metadata_dict[key] = as_number(value) if is_number(value) else value
                 continue
 
             elif curr_header == "Difficulty":
                 key, value = _Parser.parse_line_with_key(line)
                 key = key.replace("h_p", "hp")
-                difficulty_dict[key] = int(value) if is_int(value) else value
+                difficulty_dict[key] = as_number(value) if is_number(value) else value
                 continue
 
             elif curr_header == "Events":

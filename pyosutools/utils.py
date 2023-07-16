@@ -1,6 +1,8 @@
 import struct
 import datetime
 
+from typing import Union
+
 
 # PART OF CODE COPIED FROM https://github.com/jaasonw/osu-db-tools
 def read_bool(buffer) -> bool:
@@ -61,7 +63,7 @@ def read_string(buffer, encoding: str = "utf-8") -> str:
             if (byte & (1 << 7)) == 0:
                 break
             shift += 7
-    return (struct.unpack("<" + str(strlen) + "s", buffer.read(strlen))[0]).decode(encoding)
+    return struct.unpack(f"<{str(strlen)}s", buffer.read(strlen))[0].decode(encoding)
 # PART OF CODE COPIED FROM https://github.com/jaasonw/osu-db-tools
 
 
@@ -79,3 +81,20 @@ def is_int(text) -> bool:
     except (ValueError, AssertionError):
         return False
     return True
+
+
+def is_number(text) -> bool:
+    try:
+        float(text)
+    except (ValueError):
+        return False
+    return True
+
+
+def as_number(number) -> Union[int, float]:
+    if is_int(number):
+        return int(number)
+    elif is_number(number):
+        return float(number)
+    else:
+        raise ValueError(f"could not convert '{type(number)}' to number: {number}")
