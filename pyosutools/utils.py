@@ -77,10 +77,9 @@ def read_datetime(buffer) -> datetime.datetime:
 
 def is_int(text) -> bool:
     try:
-        assert int(text) == float(text)
+        return float(text).is_integer()
     except (ValueError, AssertionError):
         return False
-    return True
 
 
 def is_number(text) -> bool:

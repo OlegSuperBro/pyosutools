@@ -1,6 +1,7 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from aenum import IntFlag, Enum
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 
 from pyosutools.datatypes import GameMode
 
@@ -18,6 +19,7 @@ class EventType(Enum):
     BACKGROUND = 0
     VIDEO = 1
     BREAK = 2
+    BACKGROUND_COLOUR = 3
 
 
 class HitSound(IntFlag):
@@ -43,7 +45,7 @@ class SliderType(Enum):
 
 @dataclass
 class GeneralSettings:
-    audio_filename: str
+    audio_filename: str = None
     audio_lead_in: int = 0
     audio_hash: str = None  # depricated
     preview_time: int = -1
@@ -106,16 +108,16 @@ class BaseEvent:
 class BackgroundEvent(BaseEvent):
     _id = 0
     filename: str
-    x_offset: int
-    y_offset: int
+    x_offset: int = 0
+    y_offset: int = 0
 
 
 @dataclass
 class VideoEvent(BaseEvent):
     _id = 1
     filename: str
-    x_offset: int
-    y_offset: int
+    x_offset: int = 0
+    y_offset: int = 0
 
 
 @dataclass
@@ -129,16 +131,14 @@ class TimingPoint:
     time: int
     beat_length: float
     meter: int
-    sample_set: int  # 0 = beatmap default, 1 = normal, 2 = soft, 3 = drum
-    sample_index: int
-    volume: int
+    sample_set: HitSample
     uninherited: bool
     effects: int
 
 
 @dataclass
 class ComboColors:
-    combo: Dict[int, Tuple[int, int, int]]
+    combo: List[Tuple[int, int, int]]
     slider_track_override: Tuple[int, int, int] = None
     slider_border: Tuple[int, int, int] = None
 
@@ -159,6 +159,8 @@ class BaseHitObject:
     time: int
     hit_sound: HitSound
     hit_sample: HitSample
+    new_combo: bool
+    combo_skips: int
 
 
 @dataclass
@@ -190,7 +192,3 @@ class SpinnerObject(BaseHitObject):
 @dataclass
 class ManiaHoldObject(BaseHitObject):
     end_time: int
-
-
-if __name__ == "__main__":
-    pass
