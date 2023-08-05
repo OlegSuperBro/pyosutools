@@ -1,7 +1,7 @@
 import glob
 from pathlib import Path
 
-from pyosutools.beatmaps.beatmap import Beatmap
+from pyosutools.beatmap.beatmap import Beatmap
 
 RESOURCES_PATH = Path(r"tests\resources\beatmaps")
 

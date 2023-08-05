@@ -3,7 +3,7 @@ from typing import List, ByteString
 import os
 import io
 
-from pyosutools.datatypes import BeatmapScores, Score
+from pyosutools.datatypes import BeatmapScores, ScoreDB
 from pyosutools.datatypes import GameMode, Mod
 from pyosutools import utils
 
@@ -98,7 +98,7 @@ class _Parser:
         if Mod(1 << 23) in mods:
             additional_info = utils.read_double(self.data_io)
 
-        return Score(gamemode, score_version, beatmap_hash, username, replay_hash,
+        return ScoreDB(gamemode, score_version, beatmap_hash, username, replay_hash,
                      count_300, count_100, count_50, count_geki, count_katu, count_miss,
                      total_score, max_combo, perfect_combo, timestamp, online_score_id, additional_info)
 

@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from pyosutools.db.osu import Osudb
-from pyosutools.db.collection import Collectiondb
-from pyosutools.db.scores import Scoresdb
-from pyosutools.db.presence import Presencedb
+from pyosutools.database.osu import Osudb
+from pyosutools.database.collection import Collectiondb
+from pyosutools.database.scores import Scoresdb
+from pyosutools.database.presence import Presencedb
 
 RESOURCES_PATH = Path(r"tests\resources\db_files")
 

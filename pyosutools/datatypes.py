@@ -5,6 +5,7 @@ from typing import List, Tuple, Optional
 import datetime
 
 
+# ---------UNIVERSAL STUFF--------- #
 class GameMode(Enum):
     """
     osu! gamemodes
@@ -53,6 +54,7 @@ class Mod(IntFlag):
     MR = 1 << 30
 
 
+# ----------BEATMAP STUFF---------- #
 class HitObjectType(IntFlag):
     CIRCLE = 1 << 0
     SLIDER = 1 << 1
@@ -241,6 +243,8 @@ class ManiaHoldObject(BaseHitObject):
     end_time: int
 
 
+# ---------DATABASES STUFF--------- #
+
 class Grade(Enum):
     """
     osu! grades on scores
@@ -256,6 +260,7 @@ class Grade(Enum):
     Unplayed = 9
 
 
+# osu!.db
 class RankedStatus(Enum):
     """
     osu! beatmap statuses
@@ -272,7 +277,7 @@ class RankedStatus(Enum):
 
 class UserPermissions(IntFlag):
     """
-    osu! user permission in chat
+    osu! user permission
     """
     UNKNOWN = 0
     NORMAL = 1
@@ -286,7 +291,7 @@ class UserPermissions(IntFlag):
 @dataclass
 class TimingPoint:
     """
-    Timing point in osu! beatmap
+    Timing point in BeatmapDB
     """
     bpm: float
     offset: float
@@ -305,7 +310,7 @@ class ModStarRatingPair:
 @dataclass
 class BeatmapDB:
     """
-    osu! beatmap
+    osu! beatmap used in osu!.db file
     """
     artist: str
     artist_unicode: str
@@ -378,8 +383,9 @@ class BeatmapDB:
     mania_scroll_speed: int
 
 
+# scores.db
 @dataclass
-class Score:
+class ScoreDB:
     """
     osu! score
     """
@@ -414,9 +420,10 @@ class BeatmapScores:
     """
     beatmap_hash: str
     count_scores: int
-    scores: List[Score]
+    scores: List[ScoreDB]
 
 
+# collection.db
 @dataclass
 class Collection:
     """
