@@ -4,8 +4,8 @@ from io import TextIOWrapper
 from os import PathLike
 from typing import List, Union
 
-from pyosutools.beatmaps.datatypes import (GeneralSettings, EditorSettings, Metadata, Difficulty,
-                                           BaseEvent, TimingPoint, ComboColors, BaseHitObject)
+from pyosutools.datatypes import (GeneralSettings, EditorSettings, Metadata, Difficulty,
+                                  BaseEvent, BeatmapTimingPoint, ComboColors, BaseHitObject)
 import pyosutools.beatmaps._parsers
 
 
@@ -17,7 +17,7 @@ class Beatmap:
     metadata: Metadata
     difficulty: Difficulty
     events: List[BaseEvent]
-    timing_points: List[TimingPoint]
+    timing_points: List[BeatmapTimingPoint]
     colours: List[ComboColors]
     hit_objects: List[BaseHitObject]
 

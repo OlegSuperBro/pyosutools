@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import List, Union
+from typing import List, ByteString
 import os
 import io
 
 from pyosutools import utils
-from pyosutools.db.datatypes import Collection
+from pyosutools.datatypes import Collection
 
 
 @dataclass
@@ -27,47 +27,40 @@ class Collectiondb:
     count_collections: int
     collections: List[Collection]
 
+    @staticmethod
+    def from_path(path: os.PathLike):
+        with open(path, "rb") as f:
+            return Collectiondb.from_file(f)
+
+    @staticmethod
+    def from_file(file: io.BufferedReader):
+        return Collectiondb.from_data(file.read())
+
+    @staticmethod
+    def from_data(data: ByteString):
+        return _Parser(data).parse()
+
 
 class _Parser:
-    def __init__(self, collection_db_file) -> None:
-        self.collection_db_file = collection_db_file
+    def __init__(self, data) -> None:
+        self.data_io = io.BytesIO(data)
         self.offset = 0
 
     def parse(self) -> Collectiondb:
-        version = utils.read_uint(self.collection_db_file)
-        count_collections = utils.read_uint(self.collection_db_file)
-        collections = []
-        for _ in range(count_collections):
-            collections.append(self.parse_collection(version))
-
+        version = utils.read_uint(self.data_io)
+        count_collections = utils.read_uint(self.data_io)
+        collections = [
+            self.parse_collection(version) for _ in range(count_collections)
+        ]
         return Collectiondb(version, count_collections, collections)
 
     def parse_collection(self, game_ver: int = 0):
-        name = utils.read_string(self.collection_db_file)
-        count_beatmaps = utils.read_uint(self.collection_db_file)
-        beatmaps_hash = []
+        name = utils.read_string(self.data_io)
+        count_beatmaps = utils.read_uint(self.data_io)
 
-        for _ in range(count_beatmaps):
-            beatmaps_hash.append(utils.read_string(self.collection_db_file))
+        beatmaps_hash = [
+            utils.read_string(self.data_io)
+            for _ in range(count_beatmaps)
+        ]
 
         return Collection(name, count_beatmaps, beatmaps_hash)
-
-
-def parse_collectiondb(collectiondb_file: Union[str, os.PathLike, io.BytesIO]) -> Collectiondb:
-    """
-    Parse collection.db file
-
-    Args
-    ----
-    collectiondb_file: str | os.PathLike | io.BytesIO
-        Path or opened file
-
-    Returns
-    ----
-    Collectiondb
-        instance of Collectiondb class
-    """
-    if not isinstance(collectiondb_file, io.BytesIO):
-        collectiondb_file = open(collectiondb_file, "rb")
-
-    return _Parser(collectiondb_file).parse()

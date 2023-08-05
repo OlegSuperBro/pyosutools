@@ -2,11 +2,11 @@ from __future__ import annotations
 import re
 from typing import List, Tuple, Union, Any
 
-from pyosutools.beatmaps.datatypes import (GeneralSettings, EditorSettings, Metadata, Difficulty,
-                                           BaseEvent, TimingPoint, ComboColors, BaseHitObject, HitObjectType,
-                                           EventType, BackgroundEvent, BreakEvent, VideoEvent,
-                                           CircleObject, ManiaHoldObject, SliderObject, SpinnerObject,
-                                           SliderType, CurvePoint, HitSound, HitSample)
+from pyosutools.datatypes import (GeneralSettings, EditorSettings, Metadata, Difficulty,
+                                  BaseEvent, BeatmapTimingPoint, ComboColors, BaseHitObject, HitObjectType,
+                                  EventType, BackgroundEvent, BreakEvent, VideoEvent,
+                                  CircleObject, ManiaHoldObject, SliderObject, SpinnerObject,
+                                  SliderType, CurvePoint, HitSound, HitSample)
 from pyosutools.utils import is_number, as_number
 import pyosutools.beatmaps.beatmap
 
@@ -251,7 +251,7 @@ class EventParser(BaseParser):
 
 class TimingPointsParser(BaseParser):
     @staticmethod
-    def parse(data: List[str]) -> List[TimingPoint]:
+    def parse(data: List[str]) -> List[BeatmapTimingPoint]:
         tmp_timing_points = []
 
         for start_index, line in enumerate(data, 1):
@@ -272,8 +272,6 @@ class TimingPointsParser(BaseParser):
 
             values = TimingPointsParser.parse_values(line)
 
-            print(values)
-
             start_time = values[0]
             beat_length = values[1]
             meter = None
@@ -287,7 +285,7 @@ class TimingPointsParser(BaseParser):
                 uninherited = values[6]
                 effects = values[7] if len(values) > 7 else None
 
-            tmp_timing_points.append(TimingPoint(start_time, beat_length, meter, sample_set, uninherited, effects))
+            tmp_timing_points.append(BeatmapTimingPoint(start_time, beat_length, meter, sample_set, uninherited, effects))
 
         return tmp_timing_points
 
